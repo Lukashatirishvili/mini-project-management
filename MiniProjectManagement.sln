@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniProjectManagement.Api", "MiniProjectManagement.Api\MiniProjectManagement.Api.csproj", "{BB0B9AF9-153F-4754-814D-C49C33833AE5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BB0B9AF9-153F-4754-814D-C49C33833AE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB0B9AF9-153F-4754-814D-C49C33833AE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB0B9AF9-153F-4754-814D-C49C33833AE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB0B9AF9-153F-4754-814D-C49C33833AE5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
