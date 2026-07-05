@@ -1,6 +1,8 @@
+using System.Reflection.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using MiniProjectManagement.Api.DTOs.Common;
 using MiniProjectManagement.Api.DTOs.Tasks;
+using MiniProjectManagement.Api.Helpers;
 using MiniProjectManagement.Api.Services.Interfaces;
 
 namespace MiniProjectManagement.Api.Controllers;
@@ -20,7 +22,7 @@ public class TasksController : Controller
     public async Task<ActionResult<PagedResponseDto<TaskResponseDto>>> GetTasks(
         [FromQuery] TaskQueryParameters parameters)
     {
-        var tasks = await _projectTaskService.GetAllTasksAsync(parameters);
+        var tasks = await _projectTaskService.GetTasksAsync(parameters);
         
         return Ok(tasks);
     }
@@ -28,37 +30,37 @@ public class TasksController : Controller
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TaskResponseDto>> GetTaskById(int id)
     {
-        var tasks = await _projectTaskService.GetTaskByIdAsync(id);
+        var result = await _projectTaskService.GetTaskByIdAsync(id);
 
-        if (tasks == null)
+        if (!result.Succeeded)
         {
-            return NotFound();
+            return HandleServiceError<TaskResponseDto>(result);
         }
         
-        return Ok(tasks);
+        return Ok(result.Data);
     }
 
     [HttpPost]
     public async Task<ActionResult<TaskResponseDto>> CreateTask(CreateTaskDto dto)
     {
-        var task = await _projectTaskService.CreateTaskAsync(dto);
+        var result = await _projectTaskService.CreateTaskAsync(dto);
 
-        if (task is null)
+        if (!result.Succeeded)
         {
-            return  BadRequest("Project Does not exist");
+            return HandleServiceError<TaskResponseDto>(result);
         }
         
-        return CreatedAtAction(nameof(GetTaskById), new { id = task.Id }, task);
+        return CreatedAtAction(nameof(GetTaskById), new { id = result.Data!.Id }, result.Data);
     }
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult> UpdateTask(int id, UpdateTaskDto dto)
     {
-        var updated = await _projectTaskService.UpdateTaskAsync(id, dto);
+        var result = await _projectTaskService.UpdateTaskAsync(id, dto);
 
-        if (!updated)
+        if (!result.Succeeded)
         {
-            return NotFound();
+            return HandleServiceError<bool>(result);
         }
         
         return NoContent();
@@ -67,13 +69,20 @@ public class TasksController : Controller
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> DeleteTask(int id)
     {
-        var deleted = await _projectTaskService.DeleteTaskAsync(id);
+        var result = await _projectTaskService.DeleteTaskAsync(id);
         
-        if  (!deleted)
+        return !result.Succeeded ? HandleServiceError<bool>(result) : NoContent();
+    }
+    
+    private ActionResult HandleServiceError<T>(ServiceResult<T> result)
+    {
+        return result.ErrorType switch
         {
-            return NotFound();
-        }
-        
-        return NoContent();
+            ServiceErrorType.NotFound => NotFound(result.ErrorMessage),
+            ServiceErrorType.BadRequest => BadRequest(result.ErrorMessage),
+            ServiceErrorType.Validation => BadRequest(result.ErrorMessage),
+            ServiceErrorType.Conflict => Conflict(result.ErrorMessage),
+            _ => StatusCode(500, "Unexpected error occurred.")
+        };
     }
 }

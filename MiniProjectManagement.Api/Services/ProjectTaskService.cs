@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MiniProjectManagement.Api.Data;
 using MiniProjectManagement.Api.DTOs.Common;
 using MiniProjectManagement.Api.DTOs.Tasks;
+using MiniProjectManagement.Api.Helpers;
 using MiniProjectManagement.Api.Models;
 using MiniProjectManagement.Api.Services.Interfaces;
 
@@ -17,7 +18,7 @@ public class ProjectTaskService : IProjectTaskService
     }
 
 
-    public async Task<PagedResponseDto<TaskResponseDto>> GetAllTasksAsync(TaskQueryParameters queryParameters)
+    public async Task<PagedResponseDto<TaskResponseDto>> GetTasksAsync(TaskQueryParameters queryParameters)
     {
         var query = _context.ProjectTasks
             .AsNoTracking()
@@ -68,12 +69,11 @@ public class ProjectTaskService : IProjectTaskService
             TotalPages = (int)Math.Ceiling(totalCount / (double)queryParameters.PageSize),
             Data = tasks
         };
-
     }
 
-    public async Task<TaskResponseDto?> GetTaskByIdAsync(int id)
+    public async Task<ServiceResult<TaskResponseDto>> GetTaskByIdAsync(int id)
     {
-        return await _context.ProjectTasks
+        var task = await _context.ProjectTasks
             .AsNoTracking()
             .Where(t => t.Id == id)
             .Select(t => new TaskResponseDto
@@ -88,15 +88,23 @@ public class ProjectTaskService : IProjectTaskService
                 ProjectName = t.Project.Name
             })
             .FirstOrDefaultAsync();
+
+        if (task is null)
+        {
+            return ServiceResult<TaskResponseDto>.NotFound("Task was not found.");
+        }
+
+        return ServiceResult<TaskResponseDto>.Success(task);
     }
 
-    public async Task<TaskResponseDto?> CreateTaskAsync(CreateTaskDto dto)
+    public async Task<ServiceResult<TaskResponseDto>> CreateTaskAsync(CreateTaskDto dto)
     {
-        var projectExists = await _context.Projects.AnyAsync(p => p.Id == dto.ProjectId);
+        var projectExists = await _context.Projects
+            .AnyAsync(p => p.Id == dto.ProjectId);
 
         if (!projectExists)
         {
-            return null;
+            return ServiceResult<TaskResponseDto>.BadRequest("Project does not exist.");
         }
 
         var task = new ProjectTask
@@ -105,46 +113,64 @@ public class ProjectTaskService : IProjectTaskService
             Description = dto.Description,
             ProjectId = dto.ProjectId,
             Status = ProjectTaskStatus.Todo,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
         };
-        
+
         _context.ProjectTasks.Add(task);
         await _context.SaveChangesAsync();
-        
-        return await GetTaskByIdAsync(task.Id);
 
+        var createdTask = await _context.ProjectTasks
+            .AsNoTracking()
+            .Where(t => t.Id == task.Id)
+            .Select(t => new TaskResponseDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                CreatedAt = t.CreatedAt,
+                UpdatedAt = t.UpdatedAt,
+                ProjectId = t.ProjectId,
+                ProjectName = t.Project.Name
+            })
+            .FirstAsync();
+
+        return ServiceResult<TaskResponseDto>.Success(createdTask);
     }
 
-    public async Task<bool> UpdateTaskAsync(int id, UpdateTaskDto dto)
+    public async Task<ServiceResult<bool>> UpdateTaskAsync(int id, UpdateTaskDto dto)
     {
-        var task = await _context.ProjectTasks.FirstOrDefaultAsync(t => t.Id == id);
+        var task = await _context.ProjectTasks
+            .FirstOrDefaultAsync(t => t.Id == id);
 
-        if (task == null)
+        if (task is null)
         {
-            return false;
+            return ServiceResult<bool>.NotFound("Task was not found.");
         }
-        
+
         task.Title = dto.Title;
         task.Description = dto.Description;
         task.Status = dto.Status;
         task.UpdatedAt = DateTime.UtcNow;
-        
+
         await _context.SaveChangesAsync();
-        return true;
+
+        return ServiceResult<bool>.Success(true);
     }
 
-    public async Task<bool> DeleteTaskAsync(int id)
+    public async Task<ServiceResult<bool>> DeleteTaskAsync(int id)
     {
-        var task = await _context.ProjectTasks.FindAsync(id);
+        var task = await _context.ProjectTasks
+            .FirstOrDefaultAsync(t => t.Id == id);
 
         if (task is null)
         {
-            return false;
+            return ServiceResult<bool>.NotFound("Task was not found.");
         }
-        
+
         _context.ProjectTasks.Remove(task);
         await _context.SaveChangesAsync();
-        
-        return true;
+
+        return ServiceResult<bool>.Success(true);
     }
 }
