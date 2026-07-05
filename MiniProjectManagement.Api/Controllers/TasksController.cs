@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using MiniProjectManagement.Api.DTOs.Common;
 using MiniProjectManagement.Api.DTOs.Tasks;
 using MiniProjectManagement.Api.Services.Interfaces;
 
@@ -16,9 +17,10 @@ public class TasksController : Controller
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<TaskResponseDto>>> GetAllTasks()
+    public async Task<ActionResult<PagedResponseDto<TaskResponseDto>>> GetTasks(
+        [FromQuery] TaskQueryParameters parameters)
     {
-        var tasks = await _projectTaskService.GetAllTasksAsync();
+        var tasks = await _projectTaskService.GetAllTasksAsync(parameters);
         
         return Ok(tasks);
     }

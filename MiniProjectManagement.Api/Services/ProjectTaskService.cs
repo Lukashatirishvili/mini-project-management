@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MiniProjectManagement.Api.Data;
+using MiniProjectManagement.Api.DTOs.Common;
 using MiniProjectManagement.Api.DTOs.Tasks;
 using MiniProjectManagement.Api.Models;
 using MiniProjectManagement.Api.Services.Interfaces;
@@ -14,12 +15,38 @@ public class ProjectTaskService : IProjectTaskService
     {
         _context = context;
     }
-    
-    public async Task<List<TaskResponseDto>> GetAllTasksAsync()
+
+
+    public async Task<PagedResponseDto<TaskResponseDto>> GetAllTasksAsync(TaskQueryParameters queryParameters)
     {
-        return await _context.ProjectTasks
+        var query = _context.ProjectTasks
             .AsNoTracking()
+            .AsQueryable();
+
+        if (queryParameters.ProjectId.HasValue)
+        {
+            query = query.Where(t => t.ProjectId == queryParameters.ProjectId.Value);
+        }
+
+        if (queryParameters.Status.HasValue)
+        {
+            query = query.Where(t => t.Status == queryParameters.Status.Value);
+        }
+
+        if (!string.IsNullOrEmpty(queryParameters.Search))
+        {
+            var search = queryParameters.Search.Trim();
+
+            query = query.Where(t =>
+                t.Description != null && t.Description.Contains(search) || t.Title.Contains(search));
+        }
+        
+        var totalCount = await query.CountAsync();
+
+        var tasks = await query
             .OrderByDescending(t => t.CreatedAt)
+            .Skip((queryParameters.Page - 1) * queryParameters.PageSize)
+            .Take(queryParameters.PageSize)
             .Select(t => new TaskResponseDto
             {
                 Id = t.Id,
@@ -30,9 +57,18 @@ public class ProjectTaskService : IProjectTaskService
                 UpdatedAt = t.UpdatedAt,
                 ProjectId = t.ProjectId,
                 ProjectName = t.Project.Name
-                
             })
             .ToListAsync();
+
+        return new PagedResponseDto<TaskResponseDto>
+        {
+            Page = queryParameters.Page,
+            PageSize = queryParameters.PageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)queryParameters.PageSize),
+            Data = tasks
+        };
+
     }
 
     public async Task<TaskResponseDto?> GetTaskByIdAsync(int id)

@@ -1,10 +1,11 @@
+using MiniProjectManagement.Api.DTOs.Common;
 using MiniProjectManagement.Api.DTOs.Tasks;
 
 namespace MiniProjectManagement.Api.Services.Interfaces;
 
 public interface IProjectTaskService
 {
-    Task<List<TaskResponseDto>> GetAllTasksAsync();
+    Task<PagedResponseDto<TaskResponseDto>> GetAllTasksAsync(TaskQueryParameters queryParameters);
     Task<TaskResponseDto?> GetTaskByIdAsync(int id);
     Task<TaskResponseDto?> CreateTaskAsync(CreateTaskDto dto);
     Task<bool> UpdateTaskAsync(int id, UpdateTaskDto dto);
