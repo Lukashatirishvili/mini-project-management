@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     
     public DbSet<Project>  Projects { get; set; }
     public DbSet<ProjectTask>  ProjectTasks { get; set; }
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -44,6 +45,27 @@ public class AppDbContext : DbContext
                 .WithMany(p => p.Tasks)
                 .HasForeignKey(t => t.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.Property(u => u.FullName)
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            entity.Property(u => u.Email)
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            entity.HasIndex(u => u.Email)
+                .IsUnique();
+
+            entity.Property(u => u.PasswordHash)
+                .IsRequired();
+            
+            entity.Property(u => u.Role)
+                .HasConversion<string>()
+                .HasMaxLength(30);
         });
     }
     
