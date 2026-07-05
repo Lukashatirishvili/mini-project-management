@@ -10,10 +10,12 @@ namespace MiniProjectManagement.Api.Services;
 public class ProjectService : IProjectService
 {
     private readonly AppDbContext _dbContext;
+    private readonly ILogger<ProjectService> _logger;
 
-    public ProjectService(AppDbContext dbContext)
+    public ProjectService(AppDbContext dbContext, ILogger<ProjectService> logger)
     {
         _dbContext = dbContext;
+        _logger = logger;
     }
     
     public async Task<List<ProjectResponseDto>> GetAllProjectsAsync()
@@ -48,6 +50,7 @@ public class ProjectService : IProjectService
 
         if (project is null)
         {
+            _logger.LogWarning("Project not found. ProjectId: {ProjectId}", id);
             return ServiceResult<ProjectResponseDto>.NotFound("Project not found");
         }
         
@@ -60,6 +63,8 @@ public class ProjectService : IProjectService
 
         if (projectNameExists)
         {
+            _logger.LogWarning("project creation failed. Dublicate project name: {ProjectName}", dto.Name);
+            
             return ServiceResult<ProjectResponseDto>.Conflict("Project name already exists");
         }
         
@@ -72,6 +77,8 @@ public class ProjectService : IProjectService
         
         _dbContext.Projects.Add(project);
         await _dbContext.SaveChangesAsync();
+        
+        _logger.LogInformation("Project created. ProjectId: {ProjectId}", project.Id);
 
         var response = new ProjectResponseDto
         {
@@ -90,6 +97,8 @@ public class ProjectService : IProjectService
 
         if (project is null)
         {
+            _logger.LogWarning("Project not found. ProjectId: {ProjectId}", id);
+            
             return ServiceResult<bool>.NotFound("Project not found");
         }
         
@@ -98,6 +107,8 @@ public class ProjectService : IProjectService
 
         if (projectNameExists)
         {
+            _logger.LogWarning("project name already exists. ProjectId: {ProjectId}", id);
+            
             return ServiceResult<bool>.NotFound("Project name already exists");
         }
         
@@ -105,6 +116,8 @@ public class ProjectService : IProjectService
         project.Description = updateProjectDto.Description;
         
         await _dbContext.SaveChangesAsync();
+        
+        _logger.LogInformation("Project updated. ProjectId: {ProjectId}", id);
         
         return ServiceResult<bool>.Success(true);
     }
@@ -115,11 +128,14 @@ public class ProjectService : IProjectService
 
         if (project is null)
         {
+            _logger.LogWarning("Project delete failed. Project not found. ProjectId: {ProjectId}", id);
             return ServiceResult<bool>.NotFound("Project not found");
         }
 
         _dbContext.Projects.Remove(project);
         await _dbContext.SaveChangesAsync();
+        
+        _logger.LogInformation("Project deleted. ProjectId: {ProjectId}", id);
         
         return ServiceResult<bool>.Success(true);
     }

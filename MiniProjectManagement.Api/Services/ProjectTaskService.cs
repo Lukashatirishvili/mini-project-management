@@ -11,10 +11,12 @@ namespace MiniProjectManagement.Api.Services;
 public class ProjectTaskService : IProjectTaskService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<ProjectTaskService> _logger;
 
-    public ProjectTaskService(AppDbContext context)
+    public ProjectTaskService(AppDbContext context, ILogger<ProjectTaskService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
 
@@ -91,6 +93,8 @@ public class ProjectTaskService : IProjectTaskService
 
         if (task is null)
         {
+            _logger.LogWarning("Task not found. TaskId: {TaskId}", id);
+            
             return ServiceResult<TaskResponseDto>.NotFound("Task was not found.");
         }
 
@@ -99,11 +103,15 @@ public class ProjectTaskService : IProjectTaskService
 
     public async Task<ServiceResult<TaskResponseDto>> CreateTaskAsync(CreateTaskDto dto)
     {
+        
         var projectExists = await _context.Projects
             .AnyAsync(p => p.Id == dto.ProjectId);
 
         if (!projectExists)
         {
+            _logger.LogWarning("Task creation failed. Project does not exist. ProjectId: {ProjectId}", dto.ProjectId);
+
+            
             return ServiceResult<TaskResponseDto>.BadRequest("Project does not exist.");
         }
 
@@ -126,6 +134,11 @@ public class ProjectTaskService : IProjectTaskService
 
         _context.ProjectTasks.Add(task);
         await _context.SaveChangesAsync();
+        
+        _logger.LogInformation(
+            "Task created. TaskId: {TaskId}. ProjectId: {ProjectId}",
+            task.Id,
+            task.ProjectId);
 
         var createdTask = await _context.ProjectTasks
             .AsNoTracking()
@@ -153,6 +166,8 @@ public class ProjectTaskService : IProjectTaskService
 
         if (task is null)
         {
+            _logger.LogWarning("Task update failed. Task not found. TaskId: {TaskId}", id);
+
             return ServiceResult<bool>.NotFound("Task was not found.");
         }
 
@@ -162,6 +177,7 @@ public class ProjectTaskService : IProjectTaskService
         task.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Task updated. TaskId: {TaskId}", id);
 
         return ServiceResult<bool>.Success(true);
     }
@@ -173,11 +189,17 @@ public class ProjectTaskService : IProjectTaskService
 
         if (task is null)
         {
+            _logger.LogWarning("Task delete failed. Task not found. TaskId: {TaskId}", id);
+
             return ServiceResult<bool>.NotFound("Task was not found.");
         }
+        
+        
 
         _context.ProjectTasks.Remove(task);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Task deleted. TaskId: {TaskId}", id);
+        
 
         return ServiceResult<bool>.Success(true);
     }
