@@ -2,14 +2,13 @@ using System.Reflection.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using MiniProjectManagement.Api.DTOs.Common;
 using MiniProjectManagement.Api.DTOs.Tasks;
-using MiniProjectManagement.Api.Helpers;
 using MiniProjectManagement.Api.Services.Interfaces;
 
 namespace MiniProjectManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TasksController : Controller
+public class TasksController : BaseApiController
 {
     private readonly IProjectTaskService _projectTaskService;
 
@@ -72,17 +71,5 @@ public class TasksController : Controller
         var result = await _projectTaskService.DeleteTaskAsync(id);
         
         return !result.Succeeded ? HandleServiceError<bool>(result) : NoContent();
-    }
-    
-    private ActionResult HandleServiceError<T>(ServiceResult<T> result)
-    {
-        return result.ErrorType switch
-        {
-            ServiceErrorType.NotFound => NotFound(result.ErrorMessage),
-            ServiceErrorType.BadRequest => BadRequest(result.ErrorMessage),
-            ServiceErrorType.Validation => BadRequest(result.ErrorMessage),
-            ServiceErrorType.Conflict => Conflict(result.ErrorMessage),
-            _ => StatusCode(500, "Unexpected error occurred.")
-        };
     }
 }

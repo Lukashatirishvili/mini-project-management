@@ -107,6 +107,14 @@ public class ProjectTaskService : IProjectTaskService
             return ServiceResult<TaskResponseDto>.BadRequest("Project does not exist.");
         }
 
+        var taskNameExists = await _context.ProjectTasks
+            .AnyAsync(t => t.Title == dto.Title);
+
+        if (taskNameExists)
+        {
+            return ServiceResult<TaskResponseDto>.BadRequest("Task name already exists.");
+        }
+
         var task = new ProjectTask
         {
             Title = dto.Title,

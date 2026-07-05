@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniProjectManagement.Api.DTOs.Projects;
+using MiniProjectManagement.Api.Helpers;
 using MiniProjectManagement.Api.Services.Interfaces;
 
 namespace MiniProjectManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProjectsController : Controller
+public class ProjectsController : BaseApiController
 {
     private readonly IProjectService _projectService;
 
@@ -27,42 +28,42 @@ public class ProjectsController : Controller
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ProjectResponseDto>> GetProjectById(int id)
     {
-        var project = await _projectService.GetProjectByIdAsync(id);
+        var result = await _projectService.GetProjectByIdAsync(id);
+
+        if (!result.Succeeded)
+        {
+            return HandleServiceError<ProjectResponseDto>(result);
+        }
         
-        return Ok(project);
+        return Ok(result.Data);
     }
 
     [HttpPost]
     public async Task<ActionResult<ProjectResponseDto>> CreateProject(CreateProjectDto dto)
     {
-        var project = await _projectService.CreateProjectAsync(dto);
+        var result = await _projectService.CreateProjectAsync(dto);
+
+        if (!result.Succeeded)
+        {
+            return HandleServiceError<ProjectResponseDto>(result);
+        }
         
-        return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, project);
+        return CreatedAtAction(nameof(GetProjectById), new { id = result.Data!.Id }, result.Data);
     }
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult> UpdateProject(int id, UpdateProjectDto dto)
     {
-        var updated = await _projectService.UpdateProjectAsync(id, dto);
+        var result = await _projectService.UpdateProjectAsync(id, dto);
 
-        if (!updated)
-        {
-            return NotFound();
-        }
-        
-        return NoContent();
+        return !result.Succeeded ? HandleServiceError<bool>(result) : NoContent();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> DeleteProject(int id)
     {
-        var project = await _projectService.DeleteProjectAsync(id);
+        var result = await _projectService.DeleteProjectAsync(id);
 
-        if (!project)
-        {
-            return NotFound();
-        }
-        
-        return NoContent();
+        return !result.Succeeded ? HandleServiceError<bool>(result) : NoContent();
     }
 }
