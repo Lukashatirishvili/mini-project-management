@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MiniProjectManagement.Api.Data;
+using MiniProjectManagement.Api.Models;
 using MiniProjectManagement.Api.Services;
 using MiniProjectManagement.Api.Services.Interfaces;
 
@@ -17,6 +19,8 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(
 
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IProjectTaskService, ProjectTaskService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // Built-in OpenAPI document generation
 builder.Services.AddOpenApi();
