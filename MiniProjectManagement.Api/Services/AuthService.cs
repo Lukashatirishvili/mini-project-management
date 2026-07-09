@@ -58,4 +58,39 @@ public class AuthService : IAuthService
         
         return ServiceResult<RegisterResponseDto>.Success(response);
     }
+
+    public async Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginDto dto)
+    {
+        var normalizedEmail = dto.Email.Trim().ToLower();
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+        if (user is null)
+        {
+            _logger.LogWarning("Login failed. User not found. Email: {Email}", normalizedEmail);
+
+            return ServiceResult<LoginResponseDto>.BadRequest("Invalid email or password");
+        }
+
+        var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+
+        if (passwordVerificationResult == PasswordVerificationResult.Failed)
+        {
+            _logger.LogWarning("Login failed. Invalid password. UserId: {UserId}", user.Id);
+
+            return ServiceResult<LoginResponseDto>.BadRequest("Invalid email or password.");
+        }
+        
+        _logger.LogInformation("User logged in. UserId: {UserId}", user.Id);
+
+        var response = new LoginResponseDto
+        {
+            UserId = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            Role = user.Role,
+        };
+        
+        return ServiceResult<LoginResponseDto>.Success(response);
+    }
 }

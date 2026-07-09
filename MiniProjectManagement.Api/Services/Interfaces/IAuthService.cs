@@ -6,4 +6,5 @@ namespace MiniProjectManagement.Api.Services.Interfaces;
 public interface IAuthService
 {
     Task<ServiceResult<RegisterResponseDto>> RegisterAsync(RegisterDto dto);
+    Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginDto dto);
 }

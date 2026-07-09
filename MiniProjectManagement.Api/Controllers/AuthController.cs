@@ -27,4 +27,17 @@ public class AuthController : BaseApiController
 
         return CreatedAtAction(nameof(Register), new { id = result.Data!.UserId }, result.Data);
     }
+
+    [HttpPost("login")]
+    public async Task<ActionResult<LoginResponseDto>> Login(LoginDto dto)
+    {
+        var result = await _authService.LoginAsync(dto);
+
+        if (!result.Succeeded)
+        {
+            return HandleServiceError<LoginResponseDto>(result);
+        }
+        
+        return Ok(result.Data);
+    }
 }
