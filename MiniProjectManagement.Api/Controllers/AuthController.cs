@@ -1,5 +1,8 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MiniProjectManagement.Api.DTOs.Auth;
+using MiniProjectManagement.Api.Models;
 using MiniProjectManagement.Api.Services.Interfaces;
 
 namespace MiniProjectManagement.Api.Controllers;
@@ -39,5 +42,36 @@ public class AuthController : BaseApiController
         }
         
         return Ok(result.Data);
+    }
+    
+    [Authorize]
+    [HttpGet("me")]
+    public ActionResult<CurrentUserDto> GetCurrentUser()
+    {
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var fullName = User.FindFirstValue(ClaimTypes.Name) ?? string.Empty;
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+        var roleValue = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+
+        if (!Enum.TryParse<UserRole>(roleValue, out var role))
+        {
+            return Unauthorized();
+        }
+
+        var currentUser = new CurrentUserDto
+        {
+            UserId = userId,
+            FullName = fullName,
+            Email = email,
+            Role =  role
+        };
+
+        return Ok(currentUser);
     }
 }

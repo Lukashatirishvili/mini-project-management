@@ -1,6 +1,23 @@
-@MiniProjectManagement.Api_HostAddress = http://localhost:5123
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjMiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoidGVtcDEyIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIjoidGVtcDEyQGdtYWlsLmNvbSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlVzZXIiLCJleHAiOjE3ODM2MzIxNjcsImlzcyI6Ik1pbmlQcm9qZWN0TWFuYWdlbWVudC5BcGkiLCJhdWQiOiJNaW5pUHJvamVjdE1hbmFnZW1lbnQuQ2xpZW50In0.51ep_3sF9xWoE5jFOpDmrIlafWxf-bBDyCudkms9WG8
+@baseUrl = http://localhost:5123
 
-GET {{MiniProjectManagement.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
 
 ###
+
+GET {{baseUrl}}/api/projects
+Authorization: Bearer {{token}}
+
+###
+
+GET {{baseUrl}}/api/tasks
+Authorization: Bearer {{token}}
+
+###
+
+DELETE {{baseUrl}}/api/tasks/3
+Authorization: Bearer {{token}}
+
+
+

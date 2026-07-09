@@ -1,13 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniProjectManagement.Api.DTOs.Projects;
 using MiniProjectManagement.Api.Helpers;
+using MiniProjectManagement.Api.Models;
 using MiniProjectManagement.Api.Services.Interfaces;
 
 namespace MiniProjectManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ProjectsController : BaseApiController
 {
     private readonly IProjectService _projectService;
@@ -59,7 +62,9 @@ public class ProjectsController : BaseApiController
         return !result.Succeeded ? HandleServiceError<bool>(result) : NoContent();
     }
 
+    
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult> DeleteProject(int id)
     {
         var result = await _projectService.DeleteProjectAsync(id);

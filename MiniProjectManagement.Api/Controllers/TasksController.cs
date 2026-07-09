@@ -1,13 +1,16 @@
 using System.Reflection.Metadata;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MiniProjectManagement.Api.DTOs.Common;
 using MiniProjectManagement.Api.DTOs.Tasks;
+using MiniProjectManagement.Api.Models;
 using MiniProjectManagement.Api.Services.Interfaces;
 
 namespace MiniProjectManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class TasksController : BaseApiController
 {
     private readonly IProjectTaskService _projectTaskService;
@@ -66,6 +69,7 @@ public class TasksController : BaseApiController
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult> DeleteTask(int id)
     {
         var result = await _projectTaskService.DeleteTaskAsync(id);
