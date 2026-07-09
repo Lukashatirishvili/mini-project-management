@@ -29,13 +29,13 @@ public class AuthController : BaseApiController
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResponseDto>> Login(LoginDto dto)
+    public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto)
     {
         var result = await _authService.LoginAsync(dto);
 
         if (!result.Succeeded)
         {
-            return HandleServiceError<LoginResponseDto>(result);
+            return HandleServiceError<AuthResponseDto>(result);
         }
         
         return Ok(result.Data);

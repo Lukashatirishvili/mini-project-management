@@ -13,12 +13,14 @@ public class AuthService : IAuthService
     private readonly AppDbContext _context;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly ILogger<AuthService> _logger;
+    private readonly JwtHelper _jwtHelper;
 
-    public AuthService(AppDbContext context, IPasswordHasher<User> passwordHasher, ILogger<AuthService> logger)
+    public AuthService(AppDbContext context, IPasswordHasher<User> passwordHasher, ILogger<AuthService> logger, JwtHelper jwtHelper)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _logger = logger;
+        _jwtHelper = jwtHelper;
     }
     
     public async Task<ServiceResult<RegisterResponseDto>> RegisterAsync(RegisterDto dto)
@@ -59,38 +61,45 @@ public class AuthService : IAuthService
         return ServiceResult<RegisterResponseDto>.Success(response);
     }
 
-    public async Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginDto dto)
+    public async Task<ServiceResult<AuthResponseDto>> LoginAsync(LoginDto dto)
     {
         var normalizedEmail = dto.Email.Trim().ToLower();
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == normalizedEmail);
 
         if (user is null)
         {
             _logger.LogWarning("Login failed. User not found. Email: {Email}", normalizedEmail);
 
-            return ServiceResult<LoginResponseDto>.BadRequest("Invalid email or password");
+            return ServiceResult<AuthResponseDto>.BadRequest("Invalid email or password.");
         }
 
-        var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+        var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            dto.Password);
 
         if (passwordVerificationResult == PasswordVerificationResult.Failed)
         {
             _logger.LogWarning("Login failed. Invalid password. UserId: {UserId}", user.Id);
 
-            return ServiceResult<LoginResponseDto>.BadRequest("Invalid email or password.");
+            return ServiceResult<AuthResponseDto>.BadRequest("Invalid email or password.");
         }
-        
+
+        var token = _jwtHelper.GenerateToken(user);
+
         _logger.LogInformation("User logged in. UserId: {UserId}", user.Id);
 
-        var response = new LoginResponseDto
+        var response = new AuthResponseDto
         {
             UserId = user.Id,
             FullName = user.FullName,
             Email = user.Email,
             Role = user.Role,
+            Token = token
         };
         
-        return ServiceResult<LoginResponseDto>.Success(response);
+        return ServiceResult<AuthResponseDto>.Success(response);
     }
 }

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MiniProjectManagement.Api.Data;
+using MiniProjectManagement.Api.Helpers;
 using MiniProjectManagement.Api.Models;
 using MiniProjectManagement.Api.Services;
 using MiniProjectManagement.Api.Services.Interfaces;
@@ -21,6 +22,7 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IProjectTaskService, ProjectTaskService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<JwtHelper>();
 
 // Built-in OpenAPI document generation
 builder.Services.AddOpenApi();
